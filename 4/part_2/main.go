@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -30,8 +31,10 @@ func ConvertStringArrayToInt(arr []string) []int {
 }
 
 func (c *Card) ParseInput() {
+
 	splitted := strings.Split(c.input, ":")
 	c.cardNumber, _ = strconv.Atoi(strings.Split(splitted[0], " ")[1])
+
 	guessedAndWinningNumbers := strings.Split(splitted[1], "|")
 
 	parsedWin := ConvertStringArrayToInt(strings.Split(guessedAndWinningNumbers[0], " "))
@@ -42,48 +45,16 @@ func (c *Card) ParseInput() {
 
 }
 
-func (c *Card) CalculateScore() int {
-
-	c.score = 0
-	for _, guessedNumber := range c.guessedNumbers {
-		for _, winningNumber := range c.winningNumbers {
-			if guessedNumber == winningNumber {
-				if c.score == 0 {
-					c.score = 1
-				} else {
-					c.score *= 2
-				}
-			}
-		}
-	}
-
-	return c.score
-}
-
-func (c *Card) CalcualteDuplicates(cards []Card) []Card {
-	duplicates := make([]Card, 0)
-	for _, guessedNumber := range c.guessedNumbers {
-		for _, winningNumber := range c.winningNumbers {
-			if guessedNumber == winningNumber {
-				clonedCard := *c
-				duplicates = append(duplicates, clonedCard)
-			}
-		}
-	}
-	return duplicates
-}
-
 func CreateNewCard(input string) Card {
 
 	newCard := Card{
 		input:          input,
 		winningNumbers: make([]int, 0),
 		guessedNumbers: make([]int, 0),
-		score:          0,
+		cardNumber:     0,
 	}
 
 	newCard.ParseInput()
-	newCard.CalculateScore()
 
 	return newCard
 }
@@ -91,7 +62,7 @@ func CreateNewCard(input string) Card {
 func main() {
 
 	// First Star
-	file, err := os.Open("./test_input.txt")
+	file, err := os.Open("../input.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,30 +79,7 @@ func main() {
 		cards = append(cards, card)
 	}
 
-	sum := 0
-	for _, card := range cards {
-		sum += card.score
-	}
-
-	log.Println("Total score is: ", sum)
-
 	// Check for any errors during scanning
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Second Star
-	// Create a scanner to read the file line by line
-	scanner = bufio.NewScanner(file)
-	cards = make([]Card, 0)
-	for scanner.Scan() {
-		line := scanner.Text()
-		card := CreateNewCard(line)
-		cards = append(cards, card)
-	}
-
-	
-
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
