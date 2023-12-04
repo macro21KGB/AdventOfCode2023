@@ -18,14 +18,13 @@ possible_string_digit = {
 
 
 def find_all_digit_in_string(string):
-    pattern = "|".join(possible_string_digit.keys()) + "|\\d"
+    pattern = "one|two|three|four|five|six|seven|eight|nine|\d"
     all_digits = re.findall(pattern, string)
-    mapped_digits = map(transform_string_to_digit, all_digits)
 
-    return list(mapped_digits)
+    return list(all_digits)
 
 
-def transform_string_to_digit(string):
+def transform_string_to_digit(string: str) -> str:
     if string.isdigit():
         return string
     return possible_string_digit[string]
@@ -35,21 +34,20 @@ def main():
     with open("./input_1.txt", "r") as file:
         lines = file.readlines()
 
-        numbers = []
+        number_sum = 0
         for line in lines:
             digits = find_all_digit_in_string(line)
+            first_digit = transform_string_to_digit(digits[0])
+            last_digit = transform_string_to_digit(digits[-1])
 
-            first_digit = digits[0]
-            last_digit = digits[-1]
+            print(digits)
+            print(first_digit, last_digit)
+            joined_number = int(first_digit + last_digit)
+            number_sum = joined_number + number_sum
 
-            final_digit = int(first_digit + last_digit)
-            print(first_digit, last_digit, final_digit)
-            numbers.append(final_digit)
-        print(sum(numbers))
+    print(number_sum)
 
-        with open("./output_1.txt", "w") as output_file:
-            for number in numbers:
-                output_file.write(str(number) + "\n")
+
 
 
 def test():
