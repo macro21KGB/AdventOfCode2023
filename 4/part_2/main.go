@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -13,7 +12,6 @@ type Card struct {
 	input          string
 	winningNumbers []int
 	guessedNumbers []int
-	score          int
 	cardNumber     int
 }
 
@@ -45,6 +43,19 @@ func (c *Card) ParseInput() {
 
 }
 
+func (c Card) CalculateAmountOfCorrectGuesses() int {
+
+	amountOfCorrectGuesses := 0
+	for _, v := range c.guessedNumbers {
+		for _, w := range c.winningNumbers {
+			if v == w {
+				amountOfCorrectGuesses++
+			}
+		}
+	}
+	return amountOfCorrectGuesses
+}
+
 func CreateNewCard(input string) Card {
 
 	newCard := Card{
@@ -57,6 +68,41 @@ func CreateNewCard(input string) Card {
 	newCard.ParseInput()
 
 	return newCard
+}
+
+func ElminateMultipleWhiteSpaces(input string) string {
+
+	splitted := strings.Split(input, " ")
+	results := make([]string, 0)
+	for _, v := range splitted {
+		if v != "" {
+			results = append(results, v)
+		}
+	}
+
+	return strings.Join(results, " ")
+}
+
+func UpdateMapWithDuplicatedCards(mapCard map[int][]Card, nextCardNumber, amountOfDuplicates int) map[int][]Card {
+
+	maxMapCardNumber := len(mapCard)
+	if nextCardNumber > maxMapCardNumber {
+		return mapCard
+	}
+
+	// loop from 0 to amountOfDuplicates
+	for i := 0; i < amountOfDuplicates; i++ {
+		nextMapIndex := nextCardNumber + i
+		if nextMapIndex > maxMapCardNumber {
+			break
+		}
+
+		cards := mapCard[nextMapIndex]
+
+		mapCard[cards[0].cardNumber] = append(mapCard[nextMapIndex], cards[0])
+	}
+
+	return mapCard
 }
 
 func main() {
@@ -72,12 +118,32 @@ func main() {
 	scanner := bufio.NewScanner(file)
 
 	// Read the file line by line
-	cards := make([]Card, 0)
+	mapCard := make(map[int][]Card)
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := ElminateMultipleWhiteSpaces(scanner.Text())
 		card := CreateNewCard(line)
-		cards = append(cards, card)
+		mapCard[card.cardNumber] = append(mapCard[card.cardNumber], card)
 	}
+
+	lengthOfMap := len(mapCard)
+
+	for i := 1; i <= lengthOfMap; i++ {
+		cards := mapCard[i]
+		for _, card := range cards {
+			amountOfCorrectGuesses := card.CalculateAmountOfCorrectGuesses()
+			mapCard = UpdateMapWithDuplicatedCards(mapCard, card.cardNumber+1, amountOfCorrectGuesses)
+		}
+
+	}
+
+	totalAmountOfCards := 0
+	for _, cards := range mapCard {
+		for range cards {
+			totalAmountOfCards++
+		}
+	}
+
+	log.Println("Total amount of cards: ", totalAmountOfCards)
 
 	// Check for any errors during scanning
 	if err := scanner.Err(); err != nil {
