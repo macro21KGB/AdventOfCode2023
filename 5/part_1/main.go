@@ -26,13 +26,15 @@ type TransformationMap struct {
 	Values []TransformationMapValue
 }
 
-type TransformationMapValue struct {
-	SourceStartRange      int
-	DestinationStartRange int
-	Length                int
+type Range struct {
+	Start int
+	End   int
 }
 
-type ConversionMapType = map[string]map[int]int
+type TransformationMapValue struct {
+	SourceRange      Range
+	DestinationRange Range
+}
 
 // Extract the seeds from the input string
 func ExtractSeeds(input string) []int {
@@ -46,28 +48,43 @@ func ExtractFromTo(input []string) (string, string) {
 	return input[1], input[2]
 }
 
-func UpdateConversionMap(conversionMap *ConversionMapType, from int, to int, where string) {
-	if (*conversionMap)[where] == nil {
-		(*conversionMap)[where] = make(map[int]int)
+func (tMap TransformationMap) ConvertSourceToDestination(valueToConvert int) int {
+	for _, value := range tMap.Values {
+		if value.SourceRange.Start <= valueToConvert && valueToConvert <= value.SourceRange.End {
+			return valueToConvert + (value.DestinationRange.Start - value.SourceRange.Start)
+		}
 	}
 
-	(*conversionMap)[where][from] = to
-
+	return valueToConvert
 }
 
-func FindSeedToLocationMap(conversionMap ConversionMapType, seed int, conversionSequence []string) int {
+func SelectMinimumValue(values []int) int {
+	minimum := values[0]
+	for _, value := range values {
+		if value < minimum {
+			minimum = value
+		}
+	}
+
+	return minimum
+}
+
+func FindSeedToLocationMap(maps []TransformationMap, seed int) int {
 
 	currentConverted := seed
-	for _, conversion := range conversionSequence {
-		if conversionMap[conversion][currentConverted] != 0 {
-			currentConverted = conversionMap[conversion][currentConverted]
+
+	for _, translationMap := range maps {
+		newValue := translationMap.ConvertSourceToDestination(currentConverted)
+		if newValue != currentConverted {
+			currentConverted = newValue
 		}
+
 	}
 
 	return currentConverted
 }
 
-func CalculateTransformationMap() (ConversionMapType, []int) {
+func CalculateTransformationMap() ([]TransformationMap, []int) {
 	mapRegex := regexp.MustCompile(`(\w+)\-to\-(\w+) map:`)
 	// First Star
 	file, err := os.Open("./input.txt")
@@ -86,7 +103,6 @@ func CalculateTransformationMap() (ConversionMapType, []int) {
 
 	// conversionMap è una mappa di mappe. La chiave esterna è una stringa, che corrisponde al valore dove vuoi andare,
 	// mentre la chiave interna e il valore sono entrambi interi e sono le conversioni, se non c'è una conversione vale lo stesso numero
-	conversionMap := make(ConversionMapType, 0)
 
 	// Loop through the file line by line
 	for scanner.Scan() {
@@ -114,9 +130,8 @@ func CalculateTransformationMap() (ConversionMapType, []int) {
 
 				values := StringsToInts(strings.Split(strings.TrimSpace(line), " "))
 				newTMap.Values = append(newTMap.Values, TransformationMapValue{
-					SourceStartRange:      values[1],
-					DestinationStartRange: values[0],
-					Length:                values[2],
+					SourceRange:      Range{Start: values[1], End: values[1] + values[2] - 1},
+					DestinationRange: Range{Start: values[0], End: values[0] + values[2] - 1},
 				})
 			}
 
@@ -125,31 +140,21 @@ func CalculateTransformationMap() (ConversionMapType, []int) {
 
 	}
 
-	for _, tMap := range transformationMaps {
-
-		for _, value := range tMap.Values {
-			for i := 0; i < value.Length; i++ {
-				UpdateConversionMap(&conversionMap, value.SourceStartRange+i, value.DestinationStartRange+i, tMap.To)
-			}
-		}
-
-		log.Println(len(conversionMap))
-	}
-
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
 
-	return conversionMap, seeds
+	return transformationMaps, seeds
 }
 
 func main() {
 
-	conversionMap, seeds := CalculateTransformationMap()
-	for _, seed := range seeds {
-		founded := FindSeedToLocationMap(conversionMap, seed, []string{"soil", "fertilizer", "water", "light", "temperature", "humidity", "location"})
+	transformationMaps, seeds := CalculateTransformationMap()
 
-		fmt.Println(founded)
+	locations := make([]int, 0)
+	for _, seed := range seeds {
+		locations = append(locations, FindSeedToLocationMap(transformationMaps, seed))
 	}
 
+	fmt.Println(SelectMinimumValue(locations))
 }
