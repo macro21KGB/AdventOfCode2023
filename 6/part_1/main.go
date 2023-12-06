@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"regexp"
@@ -27,25 +26,25 @@ type Game struct {
 	MinDistance int
 }
 
-func CalculateProductNumberOfWins(maxTime int, minDistance int) int {
+func CalculateNumberOfWins(maxTime int, minDistance int) int {
 
-	result := 1
+	wins := 0
 	for i := 1; i < maxTime; i++ {
 		howManyMillisRemaining := maxTime - i
 		distanceTraversed := howManyMillisRemaining * i
 
 		if distanceTraversed > minDistance {
-			result *= distanceTraversed
+			wins++
 		}
 
 	}
 
-	return result
+	return wins
 }
 
 func main() {
 
-	file, _ := os.Open("./test_input.txt")
+	file, _ := os.Open("../input.txt")
 	scanner := bufio.NewScanner(file)
 
 	times := make([]int, 0)
@@ -61,11 +60,10 @@ func main() {
 		}
 	}
 
-	totalSum := 0
+	totalPower := 1
 	for i := 0; i < len(distances); i++ {
-		resultProduct := CalculateProductNumberOfWins(times[i], distances[i])
-		fmt.Println(resultProduct)
+		totalPower *= CalculateNumberOfWins(times[i], distances[i])
 	}
 
-	log.Println(totalSum)
+	log.Println(totalPower)
 }
