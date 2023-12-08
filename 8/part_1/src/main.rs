@@ -38,6 +38,29 @@ fn traverse(
     return total_steps;
 }
 
+fn traverse_one_step(
+    nodes: &HashMap<String, Vec<String>>,
+    start_node: &str,
+    direction: char,
+) -> String {
+    let next_direction = match direction {
+        'L' => 0,
+        'R' => 1,
+        _ => panic!("Invalid direction"),
+    };
+
+    let next_node = match &nodes.get(start_node) {
+        Some(node) => node[next_direction].as_str(),
+        None => panic!("Node not found"),
+    };
+
+    return next_node.to_string();
+}
+
+fn number_of_nodes_with_zzz(nodes: &Vec<String>) -> usize {
+    return nodes.iter().filter(|node| node.contains("Z")).count();
+}
+
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
 
@@ -92,8 +115,26 @@ fn main() {
         .map(|(key, _)| key.to_string())
         .collect::<Vec<String>>();
 
-    all_node_with_a.iter().for_each(|node| {
-        let result = traverse(&nodes, Some(node), directions.clone());
-        println!("Result: {}", result);
-    });
+    // create a set
+    let mut current_direction = directions[0];
+    let mut current_direction_index = 0;
+    let mut current_node_iteration: Vec<String> = all_node_with_a.clone();
+
+    while number_of_nodes_with_zzz(&current_node_iteration) < all_node_with_a.len() {
+        {
+            let mut next_node_iteration: Vec<String> = Vec::new();
+
+            for node in current_node_iteration.iter() {
+                let next_node = traverse_one_step(&nodes, node, current_direction);
+                next_node_iteration.push(next_node);
+            }
+
+            current_node_iteration = next_node_iteration;
+
+            current_direction_index += 1;
+            current_direction = directions[current_direction_index % directions.len()];
+        }
+    }
+
+    println!("Result: {}", current_direction_index);
 }
