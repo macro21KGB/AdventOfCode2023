@@ -4,19 +4,31 @@ use std::{collections::HashMap, io::Read};
 /*
 Traverse the nodes starting With AAA and ending with ZZZ, following the directions alternately
 */
-fn traverse(nodes: &HashMap<String, Vec<String>>, directions: Vec<char>) -> i32 {
+fn traverse(
+    nodes: &HashMap<String, Vec<String>>,
+    start_node: Option<&str>,
+    directions: Vec<char>,
+) -> i32 {
     let mut total_steps = 0;
-    let mut node_to_check = "AAA";
+    let mut node_to_check = match start_node {
+        Some(node) => node,
+        None => "AAA",
+    };
+
     let mut directions_index = 0;
 
-    while node_to_check != "ZZZ" {
+    while !node_to_check.contains("Z") {
         let next_direction = match directions[directions_index % directions.len()] {
             'L' => 0,
             'R' => 1,
             _ => panic!("Invalid direction"),
         };
 
-        let next_node = &nodes.get(node_to_check).unwrap()[next_direction as usize];
+        println!("Checking node {}", node_to_check);
+        let next_node = match &nodes.get(node_to_check) {
+            Some(node) => node[next_direction].as_str(),
+            None => panic!("Node not found"),
+        };
 
         node_to_check = next_node;
         directions_index += 1;
@@ -70,13 +82,18 @@ fn main() {
     println!("START TRAVERSING");
 
     // part 1
-    let result = traverse(&nodes, directions);
-    println!("Result: {}", result);
+    // let result = traverse(&nodes, None, directions.clone());
+    // println!("Result: {}", result);
 
     // part 2
-    // let all_node_with_a = nodes
-    //     .iter()
-    //     .filter(|(key, _)| key.contains('A'))
-    //     .map(|(key, _)| key.to_string())
-    //     .collect::<Vec<String>>();
+    let all_node_with_a = nodes
+        .iter()
+        .filter(|(key, _)| key.contains('A'))
+        .map(|(key, _)| key.to_string())
+        .collect::<Vec<String>>();
+
+    all_node_with_a.iter().for_each(|node| {
+        let result = traverse(&nodes, Some(node), directions.clone());
+        println!("Result: {}", result);
+    });
 }
